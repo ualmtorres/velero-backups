@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="author" content="Servicio de las Tecnologías de la Información y las Comunicaciones - Universidad de Almería">
+<title>Copias de seguridad de Kubernetes con Velero</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<style>
+/*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
+/* Uncomment the following line when using as a custom stylesheet */
+/* @import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700"; */
+html{font-family:sans-serif;-webkit-text-size-adjust:100%}
+a{background:none}
+a:focus{outline:thin dotted}
+a:active,a:hover{outline:0}
+h1{font-size:2em;margin:.67em 0}
+b,strong{font-weight:bold}
+abbr{font-size:.9em}
+abbr[title]{cursor:help;border-bottom:1px dotted #dddddf;text-decoration:none}
+dfn{font-style:italic}
+hr{height:0}
+mark{background:#ff0;color:#000}
+code,kbd,pre,samp{font-family:monospace;font-size:1em}
+pre{white-space:pre-wrap}
+q{quotes:"\201C" "\201D" "\2018" "\2019"}
+small{font-size:80%}
+sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.5em}
+sub{bottom:-.25em}
+img{border:0}
+svg:not(:root){overflow:hidden}
+figure{margin:0}
+audio,video{display:inline-block}
+audio:not([controls]){display:none;height:0}
+fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}
+legend{border:0;padding:0}
+button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}
+button,input{line-height:normal}
+button,select{text-transform:none}
+button,html input[type=button],input[type=reset],input[type=submit]{-webkit-appearance:button;cursor:pointer}
+button[disabled],html input[disabled]{cursor:default}
+input[type=checkbox],input[type=radio]{padding:0}
+button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}
+textarea{overflow:auto;vertical-align:top}
+table{border-collapse:collapse;border-spacing:0}
+*,::before,::after{box-sizing:border-box}
+html,body{font-size:100%}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;line-height:1;position:relative;cursor:auto;-moz-tab-size:4;-o-tab-size:4;tab-size:4;word-wrap:anywhere;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
+a:hover{cursor:pointer}
+img,object,embed{max-width:100%;height:auto}
+object,embed{height:100%}
+img{-ms-interpolation-mode:bicubic}
+.left{float:left!important}
+.right{float:right!important}
+.text-left{text-align:left!important}
+.text-right{text-align:right!important}
+.text-center{text-align:center!important}
+.text-justify{text-align:justify!important}
+.hide{display:none}
+img,object,svg{display:inline-block;vertical-align:middle}
+textarea{height:auto;min-height:50px}
+select{width:100%}
+.subheader,.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;color:#7a2518;font-weight:400;margin-top:0;margin-bottom:.25em}
+div,dl,dt,dd,ul,ol,li,h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6,pre,form,p,blockquote,th,td{margin:0;padding:0}
+a{color:#2156a5;text-decoration:underline;line-height:inherit}
+a:hover,a:focus{color:#1d4b8f}
+a img{border:0}
+p{line-height:1.6;margin-bottom:1.25em;text-rendering:optimizeLegibility}
+p aside{font-size:.875em;line-height:1.35;font-style:italic}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{font-family:"Open Sans","DejaVu Sans",sans-serif;font-weight:300;font-style:normal;color:#ba3925;text-rendering:optimizeLegibility;margin-top:1em;margin-bottom:.5em;line-height:1.0125em}
+h1 small,h2 small,h3 small,#toctitle small,.sidebarblock>.content>.title small,h4 small,h5 small,h6 small{font-size:60%;color:#e99b8f;line-height:0}
+h1{font-size:2.125em}
+h2{font-size:1.6875em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
+h4,h5{font-size:1.125em}
+h6{font-size:1em}
+hr{border:solid #dddddf;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em}
+em,i{font-style:italic;line-height:inherit}
+strong,b{font-weight:bold;line-height:inherit}
+small{font-size:60%;line-height:inherit}
+code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
+ul,ol,dl{line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
+ul,ol{margin-left:1.5em}
+ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0}
+ul.circle{list-style-type:circle}
+ul.disc{list-style-type:disc}
+ul.square{list-style-type:square}
+ul.circle ul:not([class]),ul.disc ul:not([class]),ul.square ul:not([class]){list-style:inherit}
+ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
+dl dt{margin-bottom:.3125em;font-weight:bold}
+dl dd{margin-bottom:1.25em}
+blockquote{margin:0 0 1.25em;padding:.5625em 1.25em 0 1.1875em;border-left:1px solid #ddd}
+blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
+@media screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
+h1{font-size:2.75em}
+h2{font-size:2.3125em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
+h4{font-size:1.4375em}}
+table{background:#fff;margin-bottom:1.25em;border:1px solid #dedede;word-wrap:normal}
+table thead,table tfoot{background:#f7f8f7}
+table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
+table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
+table tr.even,table tr.alt{background:#f8f8f7}
+table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{line-height:1.6}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
+h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
+.center{margin-left:auto;margin-right:auto}
+.stretch{width:100%}
+.clearfix::before,.clearfix::after,.float-group::before,.float-group::after{content:" ";display:table}
+.clearfix::after,.float-group::after{clear:both}
+:not(pre).nobreak{word-wrap:normal}
+:not(pre).nowrap{white-space:nowrap}
+:not(pre).pre-wrap{white-space:pre-wrap}
+:not(pre):not([class^=L])>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background:#f7f7f8;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed}
+pre{color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;line-height:1.45;text-rendering:optimizeSpeed}
+pre code,pre pre{color:inherit;font-size:inherit;line-height:inherit}
+pre>code{display:block}
+pre.nowrap,pre.nowrap pre{white-space:pre;word-wrap:normal}
+em em{font-style:normal}
+strong strong{font-weight:400}
+.keyseq{color:rgba(51,51,51,.8)}
+kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background:#f7f7f7;border:1px solid #ccc;border-radius:3px;box-shadow:0 1px 0 rgba(0,0,0,.2),inset 0 0 0 .1em #fff;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
+.keyseq kbd:first-child{margin-left:0}
+.keyseq kbd:last-child{margin-right:0}
+.menuseq,.menuref{color:#000}
+.menuseq b:not(.caret),.menuref{font-weight:inherit}
+.menuseq{word-spacing:-.02em}
+.menuseq b.caret{font-size:1.25em;line-height:.8}
+.menuseq i.caret{font-weight:bold;text-align:center;width:.45em}
+b.button::before,b.button::after{position:relative;top:-1px;font-weight:400}
+b.button::before{content:"[";padding:0 3px 0 2px}
+b.button::after{content:"]";padding:0 2px 0 3px}
+p a>code:hover{color:rgba(0,0,0,.9)}
+#header,#content,#footnotes,#footer{width:100%;margin:0 auto;max-width:62.5em;*zoom:1;position:relative;padding-left:.9375em;padding-right:.9375em}
+#header::before,#header::after,#content::before,#content::after,#footnotes::before,#footnotes::after,#footer::before,#footer::after{content:" ";display:table}
+#header::after,#content::after,#footnotes::after,#footer::after{clear:both}
+#content{margin-top:1.25em}
+#content::before{content:none}
+#header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
+#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
+#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:flex;flex-flow:row wrap}
+#header .details span:first-child{margin-left:-.125em}
+#header .details span.email a{color:rgba(0,0,0,.85)}
+#header .details br{display:none}
+#header .details br+span::before{content:"\00a0\2013\00a0"}
+#header .details br+span.author::before{content:"\00a0\22c5\00a0";color:rgba(0,0,0,.85)}
+#header .details br+span#revremark::before{content:"\00a0|\00a0"}
+#header #revnumber{text-transform:capitalize}
+#header #revnumber::after{content:"\00a0"}
+#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #dddddf;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
+#toc{border-bottom:1px solid #e7e7e9;padding-bottom:.5em}
+#toc>ul{margin-left:.125em}
+#toc ul.sectlevel0>li>a{font-style:italic}
+#toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
+#toc ul{font-family:"Open Sans","DejaVu Sans",sans-serif;list-style-type:none}
+#toc li{line-height:1.3334;margin-top:.3334em}
+#toc a{text-decoration:none}
+#toc a:active{text-decoration:underline}
+#toctitle{color:#7a2518;font-size:1.2em}
+@media screen and (min-width:768px){#toctitle{font-size:1.375em}
+body.toc2{padding-left:15em;padding-right:0}
+#toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
+#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
+#toc.toc2>ul{font-size:.9em;margin-bottom:0}
+#toc.toc2 ul ul{margin-left:0;padding-left:1em}
+#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
+body.toc2.toc-right{padding-left:0;padding-right:15em}
+body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #e7e7e9;left:auto;right:0}}
+@media screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
+#toc.toc2{width:20em}
+#toc.toc2 #toctitle{font-size:1.375em}
+#toc.toc2>ul{font-size:.95em}
+#toc.toc2 ul ul{padding-left:1.25em}
+body.toc2.toc-right{padding-left:0;padding-right:20em}}
+#content #toc{border:1px solid #e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;border-radius:4px}
+#content #toc>:first-child{margin-top:0}
+#content #toc>:last-child{margin-bottom:0}
+#footer{max-width:none;background:rgba(0,0,0,.8);padding:1.25em}
+#footer-text{color:hsla(0,0%,100%,.8);line-height:1.44}
+#content{margin-bottom:.625em}
+.sect1{padding-bottom:.625em}
+@media screen and (min-width:768px){#content{margin-bottom:1.25em}
+.sect1{padding-bottom:1.25em}}
+.sect1:last-child{padding-bottom:0}
+.sect1+.sect1{border-top:1px solid #e7e7e9}
+#content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
+#content h1>a.anchor::before,h2>a.anchor::before,h3>a.anchor::before,#toctitle>a.anchor::before,.sidebarblock>.content>.title>a.anchor::before,h4>a.anchor::before,h5>a.anchor::before,h6>a.anchor::before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
+#content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
+#content h1>a.link,h2>a.link,h3>a.link,#toctitle>a.link,.sidebarblock>.content>.title>a.link,h4>a.link,h5>a.link,h6>a.link{color:#ba3925;text-decoration:none}
+#content h1>a.link:hover,h2>a.link:hover,h3>a.link:hover,#toctitle>a.link:hover,.sidebarblock>.content>.title>a.link:hover,h4>a.link:hover,h5>a.link:hover,h6>a.link:hover{color:#a53221}
+details,.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
+details{margin-left:1.25rem}
+details>summary{cursor:pointer;display:block;position:relative;line-height:1.6;margin-bottom:.625rem;outline:none;-webkit-tap-highlight-color:transparent}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"";border:solid transparent;border-left:solid;border-width:.3em 0 .3em .5em;position:absolute;top:.5em;left:-1.25rem;transform:translateX(15%)}
+details[open]>summary::before{border:solid transparent;border-top:solid;border-width:.5em .3em 0;transform:translateY(15%)}
+details>summary::after{content:"";width:1.25rem;height:1em;position:absolute;top:.3em;left:-1.25rem}
+.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
+table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
+.paragraph.lead>p,#preamble>.sectionbody>[class=paragraph]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
+.admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
+.admonitionblock>table td.icon{text-align:center;width:80px}
+.admonitionblock>table td.icon img{max-width:none}
+.admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
+.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #dddddf;color:rgba(0,0,0,.6);word-wrap:anywhere}
+.admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
+.exampleblock>.content{border:1px solid #e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;border-radius:4px}
+.exampleblock>.content>:first-child{margin-top:0}
+.exampleblock>.content>:last-child{margin-bottom:0}
+.sidebarblock{border:1px solid #dbdbd6;margin-bottom:1.25em;padding:1.25em;background:#f3f3f2;border-radius:4px}
+.sidebarblock>:first-child{margin-top:0}
+.sidebarblock>:last-child{margin-bottom:0}
+.sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
+.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
+.literalblock pre,.listingblock>.content>pre{border-radius:4px;overflow-x:auto;padding:1em;font-size:.8125em}
+@media screen and (min-width:768px){.literalblock pre,.listingblock>.content>pre{font-size:.90625em}}
+@media screen and (min-width:1280px){.literalblock pre,.listingblock>.content>pre{font-size:1em}}
+.literalblock pre,.listingblock>.content>pre:not(.highlight),.listingblock>.content>pre[class=highlight],.listingblock>.content>pre[class^="highlight "]{background:#f7f7f8}
+.literalblock.output pre{color:#f7f7f8;background:rgba(0,0,0,.9)}
+.listingblock>.content{position:relative}
+.listingblock code[data-lang]::before{display:none;content:attr(data-lang);position:absolute;font-size:.75em;top:.425rem;right:.5rem;line-height:1;text-transform:uppercase;color:inherit;opacity:.5}
+.listingblock:hover code[data-lang]::before{display:block}
+.listingblock.terminal pre .command::before{content:attr(data-prompt);padding-right:.5em;color:inherit;opacity:.5}
+.listingblock.terminal pre .command:not([data-prompt])::before{content:"$"}
+.listingblock pre.highlightjs{padding:0}
+.listingblock pre.highlightjs>code{padding:1em;border-radius:4px}
+.listingblock pre.prettyprint{border-width:0}
+.prettyprint{background:#f7f7f8}
+pre.prettyprint .linenums{line-height:1.45;margin-left:2em}
+pre.prettyprint li{background:none;list-style-type:inherit;padding-left:0}
+pre.prettyprint li code[data-lang]::before{opacity:1}
+pre.prettyprint li:not(:first-child) code[data-lang]::before{display:none}
+table.linenotable{border-collapse:separate;border:0;margin-bottom:0;background:none}
+table.linenotable td[class]{color:inherit;vertical-align:top;padding:0;line-height:inherit;white-space:normal}
+table.linenotable td.code{padding-left:.75em}
+table.linenotable td.linenos,pre.pygments .linenos{border-right:1px solid;opacity:.35;padding-right:.5em;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
+pre.pygments span.linenos{display:inline-block;margin-right:.75em}
+.quoteblock{margin:0 1em 1.25em 1.5em;display:table}
+.quoteblock:not(.excerpt)>.title{margin-left:-1.5em;margin-bottom:.75em}
+.quoteblock blockquote,.quoteblock p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
+.quoteblock blockquote{margin:0;padding:0;border:0}
+.quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
+.quoteblock .attribution{margin-top:.75em;margin-right:.5ex;text-align:right}
+.verseblock{margin:0 1em 1.25em}
+.verseblock pre{font-family:"Open Sans","DejaVu Sans",sans-serif;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
+.verseblock pre strong{font-weight:400}
+.verseblock .attribution{margin-top:1.25rem;margin-left:.5ex}
+.quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
+.quoteblock .attribution br,.verseblock .attribution br{display:none}
+.quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
+.quoteblock.abstract blockquote::before,.quoteblock.excerpt blockquote::before,.quoteblock .quoteblock blockquote::before{display:none}
+.quoteblock.abstract blockquote,.quoteblock.abstract p,.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{line-height:1.6;word-spacing:0}
+.quoteblock.abstract{margin:0 1em 1.25em;display:block}
+.quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
+.quoteblock.excerpt>blockquote,.quoteblock .quoteblock{padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
+.quoteblock.excerpt,.quoteblock .quoteblock{margin-left:0}
+.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{color:inherit;font-size:1.0625rem}
+.quoteblock.excerpt .attribution,.quoteblock .quoteblock .attribution{color:inherit;font-size:.85rem;text-align:left;margin-right:0}
+p.tableblock:last-child{margin-bottom:0}
+td.tableblock>.content{margin-bottom:1.25em;word-wrap:anywhere}
+td.tableblock>.content>:last-child{margin-bottom:-1.25em}
+table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
+table.grid-all>*>tr>*{border-width:1px}
+table.grid-cols>*>tr>*{border-width:0 1px}
+table.grid-rows>*>tr>*{border-width:1px 0}
+table.frame-all{border-width:1px}
+table.frame-ends{border-width:1px 0}
+table.frame-sides{border-width:0 1px}
+table.frame-none>colgroup+*>:first-child>*,table.frame-sides>colgroup+*>:first-child>*{border-top-width:0}
+table.frame-none>:last-child>:last-child>*,table.frame-sides>:last-child>:last-child>*{border-bottom-width:0}
+table.frame-none>*>tr>:first-child,table.frame-ends>*>tr>:first-child{border-left-width:0}
+table.frame-none>*>tr>:last-child,table.frame-ends>*>tr>:last-child{border-right-width:0}
+table.stripes-all>*>tr,table.stripes-odd>*>tr:nth-of-type(odd),table.stripes-even>*>tr:nth-of-type(even),table.stripes-hover>*>tr:hover{background:#f8f8f7}
+th.halign-left,td.halign-left{text-align:left}
+th.halign-right,td.halign-right{text-align:right}
+th.halign-center,td.halign-center{text-align:center}
+th.valign-top,td.valign-top{vertical-align:top}
+th.valign-bottom,td.valign-bottom{vertical-align:bottom}
+th.valign-middle,td.valign-middle{vertical-align:middle}
+table thead th,table tfoot th{font-weight:bold}
+tbody tr th{background:#f7f8f7}
+tbody tr th,tbody tr th p,tfoot tr th,tfoot tr th p{color:rgba(0,0,0,.8);font-weight:bold}
+p.tableblock>code:only-child{background:none;padding:0}
+p.tableblock{font-size:1em}
+ol{margin-left:1.75em}
+ul li ol{margin-left:1.5em}
+dl dd{margin-left:1.125em}
+dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
+li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
+ul.checklist,ul.none,ol.none,ul.no-bullet,ol.no-bullet,ol.unnumbered,ul.unstyled,ol.unstyled{list-style-type:none}
+ul.no-bullet,ol.no-bullet,ol.unnumbered{margin-left:.625em}
+ul.unstyled,ol.unstyled{margin-left:0}
+li>p:empty:only-child::before{content:"";display:inline-block}
+ul.checklist>li>p:first-child{margin-left:-1em}
+ul.checklist>li>p:first-child>.fa-square-o:first-child,ul.checklist>li>p:first-child>.fa-check-square-o:first-child{width:1.25em;font-size:.8em;position:relative;bottom:.125em}
+ul.checklist>li>p:first-child>input[type=checkbox]:first-child{margin-right:.25em}
+ul.inline{display:flex;flex-flow:row wrap;list-style:none;margin:0 0 .625em -1.25em}
+ul.inline>li{margin-left:1.25em}
+.unstyled dl dt{font-weight:400;font-style:normal}
+ol.arabic{list-style-type:decimal}
+ol.decimal{list-style-type:decimal-leading-zero}
+ol.loweralpha{list-style-type:lower-alpha}
+ol.upperalpha{list-style-type:upper-alpha}
+ol.lowerroman{list-style-type:lower-roman}
+ol.upperroman{list-style-type:upper-roman}
+ol.lowergreek{list-style-type:lower-greek}
+.hdlist>table,.colist>table{border:0;background:none}
+.hdlist>table>tbody>tr,.colist>table>tbody>tr{background:none}
+td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
+td.hdlist1{font-weight:bold;padding-bottom:1.25em}
+td.hdlist2{word-wrap:anywhere}
+.literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
+.colist td:not([class]):first-child{padding:.4em .75em 0;line-height:1;vertical-align:top}
+.colist td:not([class]):first-child img{max-width:none}
+.colist td:not([class]):last-child{padding:.25em 0}
+.thumb,.th{line-height:0;display:inline-block;border:4px solid #fff;box-shadow:0 0 0 1px #ddd}
+.imageblock.left{margin:.25em .625em 1.25em 0}
+.imageblock.right{margin:.25em 0 1.25em .625em}
+.imageblock>.title{margin-bottom:0}
+.imageblock.thumb,.imageblock.th{border-width:6px}
+.imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
+.image.left,.image.right{margin-top:.25em;margin-bottom:.25em;display:inline-block;line-height:0}
+.image.left{margin-right:.625em}
+.image.right{margin-left:.625em}
+a.image{text-decoration:none;display:inline-block}
+a.image object{pointer-events:none}
+sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
+sup.footnote a,sup.footnoteref a{text-decoration:none}
+sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+#footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
+#footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
+#footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
+#footnotes .footnote a:first-of-type{font-weight:bold;text-decoration:none;margin-left:-1.05em}
+#footnotes .footnote:last-of-type{margin-bottom:0}
+#content #footnotes{margin-top:-.625em;margin-bottom:0;padding:.75em 0}
+div.unbreakable{page-break-inside:avoid}
+.big{font-size:larger}
+.small{font-size:smaller}
+.underline{text-decoration:underline}
+.overline{text-decoration:overline}
+.line-through{text-decoration:line-through}
+.aqua{color:#00bfbf}
+.aqua-background{background:#00fafa}
+.black{color:#000}
+.black-background{background:#000}
+.blue{color:#0000bf}
+.blue-background{background:#0000fa}
+.fuchsia{color:#bf00bf}
+.fuchsia-background{background:#fa00fa}
+.gray{color:#606060}
+.gray-background{background:#7d7d7d}
+.green{color:#006000}
+.green-background{background:#007d00}
+.lime{color:#00bf00}
+.lime-background{background:#00fa00}
+.maroon{color:#600000}
+.maroon-background{background:#7d0000}
+.navy{color:#000060}
+.navy-background{background:#00007d}
+.olive{color:#606000}
+.olive-background{background:#7d7d00}
+.purple{color:#600060}
+.purple-background{background:#7d007d}
+.red{color:#bf0000}
+.red-background{background:#fa0000}
+.silver{color:#909090}
+.silver-background{background:#bcbcbc}
+.teal{color:#006060}
+.teal-background{background:#007d7d}
+.white{color:#bfbfbf}
+.white-background{background:#fafafa}
+.yellow{color:#bfbf00}
+.yellow-background{background:#fafa00}
+span.icon>.fa{cursor:default}
+a span.icon>.fa{cursor:inherit}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note::before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip::before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning::before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution::before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important::before{content:"\f06a";color:#bf0000}
+.conum[data-value]{display:inline-block;color:#fff!important;background:rgba(0,0,0,.8);border-radius:50%;text-align:center;font-size:.75em;width:1.67em;height:1.67em;line-height:1.67em;font-family:"Open Sans","DejaVu Sans",sans-serif;font-style:normal;font-weight:bold}
+.conum[data-value] *{color:#fff!important}
+.conum[data-value]+b{display:none}
+.conum[data-value]::after{content:attr(data-value)}
+pre .conum[data-value]{position:relative;top:-.125em}
+b.conum *{color:inherit!important}
+.conum:not([data-value]):empty{display:none}
+dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
+h1,h2,p,td.content,span.alt,summary{letter-spacing:-.01em}
+p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
+p,blockquote,dt,td.content,span.alt,summary{font-size:1.0625rem}
+p{margin-bottom:1.25rem}
+.sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
+.exampleblock>.content{background:#fffef7;border-color:#e0e0dc;box-shadow:0 1px 4px #e0e0dc}
+.print-only{display:none!important}
+@page{margin:1.25cm .75cm}
+@media print{*{box-shadow:none!important;text-shadow:none!important}
+html{font-size:80%}
+a{color:inherit!important;text-decoration:underline!important}
+a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
+a[href^="http:"]:not(.bare)::after,a[href^="https:"]:not(.bare)::after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
+abbr[title]{border-bottom:1px dotted}
+abbr[title]::after{content:" (" attr(title) ")"}
+pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
+thead{display:table-header-group}
+svg{max-width:100%}
+p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
+h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
+#header,#content,#footnotes,#footer{max-width:none}
+#toc,.sidebarblock,.exampleblock>.content{background:none!important}
+#toc{border-bottom:1px solid #dddddf!important;padding-bottom:0!important}
+body.book #header{text-align:center}
+body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em}
+body.book #header .details{border:0!important;display:block;padding:0!important}
+body.book #header .details span:first-child{margin-left:0!important}
+body.book #header .details br{display:block}
+body.book #header .details br+span::before{content:none!important}
+body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
+body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
+.listingblock code[data-lang]::before{display:block}
+#footer{padding:0 .9375em}
+.hide-on-print{display:none!important}
+.print-only{display:block!important}
+.hide-for-print{display:none!important}
+.show-for-print{display:inherit!important}}
+@media amzn-kf8,print{#header>h1:first-child{margin-top:1.25rem}
+.sect1{padding:0!important}
+.sect1+.sect1{border:0}
+#footer{background:none}
+#footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
+@media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/styles/github.min.css">
+</head>
+<body class="book toc2 toc-right">
+<div id="header">
+<h1>Copias de seguridad de Kubernetes con Velero</h1>
+<div class="details">
+<span id="author" class="author">Servicio de las Tecnologías de la Información y las Comunicaciones - Universidad de Almería</span><br>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Tabla de contenidos</div>
+<ul class="sectlevel1">
+<li><a href="#resumen">Resumen</a></li>
+<li><a href="#introducción-a-velero">1. Introducción a Velero</a></li>
+<li><a href="#componentes-de-velero">2. Componentes de Velero</a></li>
+<li><a href="#instalación-de-velero">3. Instalación de Velero</a>
+<ul class="sectlevel2">
+<li><a href="#instalación-del-cli-de-velero">3.1. Instalación del CLI de Velero</a></li>
+<li><a href="#preparación-del-cluster-de-kubernetes">3.2. Preparación del cluster de Kubernetes</a></li>
+</ul>
+</li>
+<li><a href="#operaciones-cotidianas">4. Operaciones cotidianas</a>
+<ul class="sectlevel2">
+<li><a href="#creación-de-backups">4.1. Creación de backups</a></li>
+<li><a href="#restauración-de-backups">4.2. Restauración de backups</a></li>
+<li><a href="#listado-de-backups">4.3. Listado de backups</a></li>
+<li><a href="#listado-de-restores">4.4. Listado de restores</a></li>
+<li><a href="#listado-de-plugins">4.5. Listado de plugins</a></li>
+<li><a href="#programación-de-backups">4.6. Programación de backups</a></li>
+<li><a href="#listado-de-schedules">4.7. Listado de schedules</a></li>
+<li><a href="#eliminación-de-un-schedule">4.8. Eliminación de un schedule</a></li>
+<li><a href="#eliminación-de-un-backup">4.9. Eliminación de un backup</a></li>
+</ul>
+</li>
+<li><a href="#simulación-de-pérdida-de-un-namespace">5. Simulación de pérdida de un namespace</a></li>
+<li><a href="#migración-de-namespaces-entre-clusters">6. Migración de namespaces entre clusters</a></li>
+<li><a href="#desinstalación-de-velero">7. Desinstalación de Velero</a></li>
+<li><a href="#conclusiones">8. Conclusiones</a></li>
+<li><a href="#referencias">Referencias</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="imageblock">
+<div class="content">
+<img src="data:image/png;base64,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" alt="logocloudstic">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="resumen"><a class="anchor" href="#resumen"></a>Resumen</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Velero es un servicio de copias de seguridad y recuperación de Kubernetes. Permite crear copias de seguridad de los objetos de Kubernetes y restaurarlos en caso de pérdida de datos. Velero puede ser usado para realizar copias de seguridad periódicas y guardarlas en un sistema de almacenamiento externo. En este tutorial veremos cómo configurar Velero para realizar copias de seguridad en un MiniIO, un sistema de almacenamiento de objetos compatible con Amazon S3.</p>
+</div>
+<div class="ulist">
+<div class="title">Objetivos</div>
+<ul>
+<li>
+<p>Instalar Velero en un cluster de Kubernetes.</p>
+</li>
+<li>
+<p>Crear y restaurar backups de un namespace de Kubernetes.</p>
+</li>
+<li>
+<p>Crear y restaurar backups de un cluster de Kubernetes.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="introducción-a-velero"><a class="anchor" href="#introducción-a-velero"></a>1. Introducción a Velero</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Velero es un servicio de copias de seguridad y recuperación de Kubernetes. Permite crear copias de seguridad de los objetos de Kubernetes y restaurarlos en caso de pérdida de datos. Velero puede ser usado para realizar copias de seguridad de un namespace o de un cluster completo. Puede configurarse para realizar copias de seguridad periódicas y puede ser usado para migrar un cluster de Kubernetes de un proveedor a otro.</p>
+</div>
+<div class="paragraph">
+<p>Velero ofrece varios proveedores de almacenamiento para guardar las copias de seguridad, como Amazon S3, Azure Blob Storage, Google Cloud Storage, OpenStack Swift, entre otros. En este tutorial veremos cómo configurar Velero para realizar copias de seguridad en MiniIO, un sistema de almacenamiento de objetos compatible con Amazon S3.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="componentes-de-velero"><a class="anchor" href="#componentes-de-velero"></a>2. Componentes de Velero</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Velero está compuesto por varios componentes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Velero CLI: Herramienta de línea de comandos para administrar e interactuar con Velero. En nuestro caso lo instalaremos en nuestro equipo local.</p>
+</li>
+<li>
+<p>Velero Server: Servidor que ejecuta los procesos de Velero. Se instala en el cluster de Kubernetes.</p>
+</li>
+<li>
+<p>Plugins de Velero: Plugins que permiten a Velero interactuar con los sistemas de almacenamiento. En nuestro caso, usaremos el plugin de Velero para AWS, que permite a Velero interactuar con sistemas de almacenamiento de objetos compatibles con Amazon S3. Otro ejemplo de plugins son los plugins de CSI, que permiten a Velero interactuar con sistemas de almacenamiento de volúmenes como OpenStack Cinder, VMware vSAN, entre otros.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="instalación-de-velero"><a class="anchor" href="#instalación-de-velero"></a>3. Instalación de Velero</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>En este apartado veremos cómo instalar Velero en un cluster de Kubernetes. Esto implicará instalar el CLI de Velero en nuestro equipo local y el servidor de Velero en el cluster de Kubernetes.</p>
+</div>
+<div class="sect2">
+<h3 id="instalación-del-cli-de-velero"><a class="anchor" href="#instalación-del-cli-de-velero"></a>3.1. Instalación del CLI de Velero</h3>
+<div class="paragraph">
+<p>El CLI lo descargamos en nuestro equipo local de acuerdo con la <a href="https://velero.io/docs/v1.10/basic-install/#install-the-cli">documentación oficial</a>. Para ello, ejecutaremos el comando siguiente:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>En Windows, lo instalaremos con Chocolatey con el comando siguiente:</p>
+<div class="paragraph">
+<p><code>choco install velero</code></p>
+</div>
+</li>
+<li>
+<p>En Linux, lo instalaremos con el gestor de paquetes de nuestro sistema operativo. En Ubuntu, lo instalaremos con el comando siguiente:</p>
+<div class="paragraph">
+<p><code>sudo apt install velero</code></p>
+</div>
+</li>
+<li>
+<p>En macOS, lo instalaremos con el comando siguiente:</p>
+<div class="paragraph">
+<p><code>brew install velero</code></p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="preparación-del-cluster-de-kubernetes"><a class="anchor" href="#preparación-del-cluster-de-kubernetes"></a>3.2. Preparación del cluster de Kubernetes</h3>
+<div class="paragraph">
+<p>Para poder instalar Velero 1.10 en un cluster de Kubernetes y poder hacer los backups en MinIO, el cluster de Kubernetes debe cumplir los siguientes requisitos:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Kubernetes 1.16 o superior.</p>
+</li>
+<li>
+<p>Acceso a MiniIO desde el cluster de Kubernetes.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Para instalar Velero en el cluster de Kubernetes, ejecutaremos el comando <code>velero install</code> con los parámetros necesarios indicando que usaremos MiniIO como sistema de almacenamiento de objetos. Necesitaremos crear un archivo de credenciales (p.e. <code>di-minio.credentials</code>) que contenga las credenciales de acceso a MiniIO.</p>
+</div>
+<div class="listingblock">
+<div class="title"><a href="https://gist.github.com/ualmtorres/7119c62b728007e9087e633e0b447d76">Archivo de credenciales</a> para MiniIO (p.e. <code>di-minio.credentials</code>)</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">[default]
+aws_access_key_id = your-user
+aws_secret_access_key = your-password</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Partimos de que ya tenemos creado un bucket en MiniIO (p.e. <code>velero-di</code>) para almacenar las copias de seguridad.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Para instalar Velero en el cluster de Kubernetes ejecutaremos el <a href="https://gist.github.com/ualmtorres/3bc7e5967fcc60780ab01328173ab1aa">comando siguiente</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero install \
+--kubeconfig cluster-terraform-di.yaml \ <b class="conum">(1)</b>
+--provider aws \ <b class="conum">(2)</b>
+--plugins velero/velero-plugin-for-aws:v1.6.0 \ <b class="conum">(3)</b>
+--bucket velero-di \ <b class="conum">(4)</b>
+--secret-file ./di-minio.credentials \ <b class="conum">(5)</b>
+--backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://&lt;minio-dns-or-ip&gt; \ <b class="conum">(6)</b>
+--image velero/velero:v1.10.2 <b class="conum">(7)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
+</li>
+<li>
+<p>Indica el proveedor de almacenamiento de objetos. En este caso, usaremos <code>aws</code> para indicar que usaremos un sistema de almacenamiento de objetos compatible con Amazon S3.</p>
+</li>
+<li>
+<p>Indica el plugin de Velero para AWS que usaremos para interactuar con el sistema de almacenamiento de objetos en el que almacenaremos los backups.</p>
+</li>
+<li>
+<p>Indica el nombre del bucket de MinIO donde se guardarán las copias de seguridad.</p>
+</li>
+<li>
+<p>Indica el archivo que contiene las credenciales para acceder al sistema de almacenamiento de objetos. En este caso, usaremos el archivo <code>di-minio.credentials</code> que contiene las credenciales de acceso a MiniIO.</p>
+</li>
+<li>
+<p>Indica la configuración del sistema de almacenamiento de objetos. Lo importante aquí es indicar la región y la URL de acceso a MinIO.</p>
+</li>
+<li>
+<p>Indica la imagen de Velero que usaremos. Este parámetro es conveniente para poder replicar la instalación con la versión concreta.</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Los valores de versión de instalación de Velero se pueden obtener de <a href="https://hub.docker.com/r/velero/velero/tags">Docker Hub</a></p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Tras esto, se instalarán en el cluster de Kubernetes los objetos siguientes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Un namespace llamado <code>velero</code>.</p>
+</li>
+<li>
+<p>Un <code>Deployment</code> llamado <code>velero</code> que ejecuta el servidor de Velero.</p>
+</li>
+<li>
+<p>Un <code>Secret</code> llamado <code>cloud-credentials</code> que contiene las credenciales de acceso al sistema de almacenamiento de objetos.</p>
+</li>
+<li>
+<p>Un <code>BackupStorageLocation</code> llamado <code>default</code> que contiene la configuración del sistema de almacenamiento de objetos.</p>
+</li>
+<li>
+<p>Un <code>VolumeSnapshotLocation</code> llamado <code>default</code> que contiene la configuración del sistema de almacenamiento de volúmenes.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Para comprobar que Velero está instalado correctamente, ejecutaremos el comando siguiente:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ kubectl --kubeconfig cluster-terraform-di.yaml get all -n velero
+
+NAME                          READY   STATUS    RESTARTS   AGE
+pod/velero-6d8f45bfbc-589ft   1/1     Running   0          2m
+
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/velero   1/1     1            1           2m
+
+NAME                                DESIRED   CURRENT   READY   AGE
+replicaset.apps/velero-6d8f45bfbc   1         1         1       2m</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="operaciones-cotidianas"><a class="anchor" href="#operaciones-cotidianas"></a>4. Operaciones cotidianas</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A continuación, veremos una serie de operaciones cotidianas que podemos realizar con Velero. Realizaremos ejemplos de creación de backups sobre un namespace y simularemos la pérdida de un namespace para ver cómo se restaura. Probaremos también a migrar un namespace de un cluster a otro.</p>
+</div>
+<div class="sect2">
+<h3 id="creación-de-backups"><a class="anchor" href="#creación-de-backups"></a>4.1. Creación de backups</h3>
+<div class="paragraph">
+<p>Para crear un backup de un namespace, ejecutaremos el <a href="https://gist.github.com/ualmtorres/45418d02101d99237b5cc011da672cd1">comando siguiente</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero backup \
+--kubeconfig cluster-terraform-di.yaml \ <b class="conum">(1)</b>
+create demo-backup-$(date +'%Y%m%d-%H%M') \ <b class="conum">(2)</b>
+--include-namespaces demo <b class="conum">(3)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
+</li>
+<li>
+<p>Indica el nombre del backup. En este caso, usaremos la fecha y hora actual.</p>
+</li>
+<li>
+<p>Indica el namespace que queremos incluir en el backup (p.e. <code>demo</code>).</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Para crear un backup del cluster completo (incluyendo todos los namespaces) basta con quitar el parámetro <code>--include-namespaces</code> y el nombre del namespace.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="restauración-de-backups"><a class="anchor" href="#restauración-de-backups"></a>4.2. Restauración de backups</h3>
+<div class="paragraph">
+<p>La restauración de un backup crea un objeto <code>Restore</code> que contiene la información de los objetos que se van a restaurar. Por tanto, la llamada al comando de restauración no consiste en restaurar la copia de seguridad, sino en crear un objeto <code>Restore</code>, que es el que contiene la información de los objetos que se van a restaurar.</p>
+</div>
+<div class="paragraph">
+<p>Para restaurar un backup, ejecutaremos el <a href="https://gist.github.com/ualmtorres/81fc2e09a7bd8e23e9241425a50969c4">comando siguiente</a>. Este comando restaura un backup en otro cluster de Kubernetes. Las credenciales de acceso al cluster de Kubernetes donde se va a realizar la recuperación del backup se indican en el archivo <code>cluster-terraform-di-dev.yaml</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero restore create \ <b class="conum">(1)</b>
+--kubeconfig cluster-terraform-di-dev.yaml \  <b class="conum">(2)</b>
+--from-backup  demo-backups-20230411144511 \ <b class="conum">(3)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Comando de Velero para crear un <em>restore</em>.</p>
+</li>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
+</li>
+<li>
+<p>Indica el nombre del backup que queremos restaurar.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="listado-de-backups"><a class="anchor" href="#listado-de-backups"></a>4.3. Listado de backups</h3>
+<div class="paragraph">
+<p>Para listar los backups, ejecutaremos el <a href="https://gist.github.com/ualmtorres/4217b59881c031545943fed41a5828dd">comando siguiente</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero backup get \ <b class="conum">(1)</b>
+--kubeconfig cluster-terraform-di.yaml <b class="conum">(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Comando de Velero para listar los backups.</p>
+</li>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="listado-de-restores"><a class="anchor" href="#listado-de-restores"></a>4.4. Listado de restores</h3>
+<div class="paragraph">
+<p>Para listar los restores, ejecutaremos el <a href="https://gist.github.com/ualmtorres/99fc886219a61f02dc9fa0b1644c6ba5">comando siguiente</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero restore get \ <b class="conum">(1)</b>
+--kubeconfig cluster-terraform-di.yaml <b class="conum">(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Comando de Velero para listar los restores.</p>
+</li>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="listado-de-plugins"><a class="anchor" href="#listado-de-plugins"></a>4.5. Listado de plugins</h3>
+<div class="paragraph">
+<p>Para listar los plugins, ejecutaremos el <a href="https://gist.github.com/ualmtorres/e65fe78ff3c67269e6a42aa67d250f83">comando siguiente</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero plugin get \ <b class="conum">(1)</b>
+--kubeconfig cluster-terraform-di.yaml <b class="conum">(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Comando de Velero para listar los plugins instalados.</p>
+</li>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="programación-de-backups"><a class="anchor" href="#programación-de-backups"></a>4.6. Programación de backups</h3>
+<div class="paragraph">
+<p>Los backups pueden programarse para que se ejecuten de forma periódica. La forma para especificar la frecuencia de ejecución es mediante un <code>cron`</code>. Para programar backups, ejecutaremos el <a href="https://gist.github.com/ualmtorres/204fd81014a8c1f268bac3f7d06de5ed">comando siguiente</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero schedule create demo-backups \ <b class="conum">(1)</b>
+--kubeconfig cluster-terraform-di.yaml \ <b class="conum">(2)</b>
+--schedule='*/5 * * * *' \ <b class="conum">(3)</b>
+--include-namespaces demo <b class="conum">(4)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Comando de Velero para crear schedules e indicación del nombre del schedule.</p>
+</li>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
+</li>
+<li>
+<p>Indica la frecuencia de ejecución del schedule. En este caso, cada 5 minutos.</p>
+</li>
+<li>
+<p>Indica el namespace que queremos incluir en el backup (p.e. <code>demo</code>).</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="listado-de-schedules"><a class="anchor" href="#listado-de-schedules"></a>4.7. Listado de schedules</h3>
+<div class="paragraph">
+<p>Para listar los schedules, ejecutaremos el <a href="https://gist.github.com/ualmtorres/761195744464c5287719a51dd8bedc60">comando siguiente</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero schedule get \ <b class="conum">(1)</b>
+--kubeconfig cluster-terraform-di.yaml <b class="conum">(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Comando de Velero para listar los schedules.</p>
+</li>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="eliminación-de-un-schedule"><a class="anchor" href="#eliminación-de-un-schedule"></a>4.8. Eliminación de un schedule</h3>
+<div class="paragraph">
+<p>Para eliminar un schedule y que dejen de hacerse backups programados, ejecutaremos el <a href="https://gist.github.com/ualmtorres/014d32e96adc3337e9ac8436592a4be8">comando siguiente</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero schedule delete di-backup-schedule \ <b class="conum">(1)</b>
+--kubeconfig cluster-terraform-di.yaml <b class="conum">(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Comando de Velero para eliminar un schedule. Se indica el nombre del schedule.</p>
+</li>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="eliminación-de-un-backup"><a class="anchor" href="#eliminación-de-un-backup"></a>4.9. Eliminación de un backup</h3>
+<div class="paragraph">
+<p>Para eliminar un backup, ejecutaremos el <a href="https://gist.github.com/ualmtorres/6545a6f70b83c580431bbfb3b474a3df">comando siguiente</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero backup delete demo-backups-20230411144511 \ <b class="conum">(1)</b>
+--kubeconfig cluster-terraform-di.yaml <b class="conum">(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Comando de Velero para eliminar un backup. Se indica el nombre del backup.</p>
+</li>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="simulación-de-pérdida-de-un-namespace"><a class="anchor" href="#simulación-de-pérdida-de-un-namespace"></a>5. Simulación de pérdida de un namespace</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Partimos de la siguiente situación:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Tenemos un cluster de Kubernetes con un namespace llamado <code>demo</code>.</p>
+</li>
+<li>
+<p>Tenemos un backup del namespace <code>demo</code> en el cluster de Kubernetes.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Para simular la pérdida de un namespace, ejecutaremos los siguientes pasos:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Creamos un backup del namespace.</p>
+</li>
+<li>
+<p>Eliminamos el namespace del cluster.</p>
+</li>
+<li>
+<p>Restauramos el backup en el cluster.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>El <a href="https://gist.github.com/ualmtorres/202b7aedb4a8c2994d22c0f7ae68adcf">código siguiente</a> muestra cómo ejecutar estos pasos:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash"># Creamos un backup del namespace
+velero backup create demo-backups-$(date +'%Y%m%d-%H%M') \
+--kubeconfig cluster-terraform-di.yaml \
+--include-namespaces demo
+
+# Eliminamos el namespace del cluster
+kubectl delete namespace demo \
+--kubeconfig cluster-terraform-di.yaml
+
+# Restauramos el backup en el cluster
+velero restore create \
+--kubeconfig cluster-terraform-di.yaml \
+--from-backup  demo-backups-20230411144511</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Si queremos restaurar un backup en un cluster diferente, deberemos indicar el archivo de credenciales de acceso al cluster de destino en el comando <code>velero restore create</code>.</p>
+</div>
+<div class="paragraph">
+<p>Por ejemplo, si queremos restaurar el backup <code>demo-backups-20230411144511</code> en un cluster de destino con credenciales de acceso almacenadas en <code>cluster-terraform-di-dev.yaml</code>, ejecutaríamos el siguiente comando:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero restore create \
+--kubeconfig cluster-terraform-di-dev.yaml \ <b class="conum">(1)</b>
+--from-backup  demo-backups-20230411144511</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de destino.</p>
+</li>
+</ol>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="migración-de-namespaces-entre-clusters"><a class="anchor" href="#migración-de-namespaces-entre-clusters"></a>6. Migración de namespaces entre clusters</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Para migrar un namespace de un cluster a otro, ejecutaremos los siguientes pasos:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Creamos un backup del namespace en el cluster de origen.</p>
+</li>
+<li>
+<p>Restauramos el backup en el cluster de destino.</p>
+</li>
+<li>
+<p>Opcional. Eliminamos el backup del cluster de origen.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>El <a href="https://gist.github.com/ualmtorres/5c19d7564dd76592341cc1e8c1f1fa59">código siguiente</a> muestra cómo ejecutar estos pasos:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash"># Creamos un backup del namespace en el cluster de origen
+velero backup create demo-backup-$(date +'%Y%m%d-%H%M') \
+--kubeconfig cluster-terraform-di.yaml \
+--include-namespaces demo
+
+# Restauramos el backup en el cluster de destino
+velero restore create \
+--kubeconfig cluster-terraform-di-dev.yaml \
+--from-backup  demo-backups-20230411144511
+
+# Opcional. Eliminamos el backup del cluster de origen
+velero backup delete demo-backups-20230411144511 \
+--kubeconfig cluster-terraform-di.yaml</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="desinstalación-de-velero"><a class="anchor" href="#desinstalación-de-velero"></a>7. Desinstalación de Velero</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Para desinstalar Velero de un cluster de Kubernetes, ejecutaremos los <a href="https://gist.github.com/ualmtorres/1e3d7c2199a0a308864c1b9e77d034cd">comandos siguientes</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">kubectl --kubeconfig cluster-terraform-di.yaml delete namespace/velero
+kubectl --kubeconfig cluster-terraform-di.yaml delete clusterrolebinding/velero
+kubectl --kubeconfig cluster-terraform-di.yaml delete crds -l component=velero</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="conclusiones"><a class="anchor" href="#conclusiones"></a>8. Conclusiones</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Velero es una herramienta muy útil para realizar backups de namespaces y para migrar namespaces entre clusters. En este tutorial hemos visto cómo instalar Velero en un cluster de Kubernetes, cómo realizar backups y restores de namespaces, cómo programar backups y cómo migrar namespaces entre clusters. En próximas versiones de este tutorial, veremos cómo incorporar soporte para backups de volúmenes persistentes OpenStack Cinder.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="referencias"><a class="anchor" href="#referencias"></a>Referencias</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://velero.io/">Página oficial de Velero</a></p>
+</li>
+<li>
+<p><a href="https://velero.io/docs/v1.10">Documentación oficial de Velero (versión 1.10)</a></p>
+</li>
+<li>
+<p><a href="https://hub.docker.com/r/velero/velero/tags">Versiones Docker de Velero</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2023-04-20 18:00:19 +0200
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
+<script>
+if (!hljs.initHighlighting.called) {
+  hljs.initHighlighting.called = true
+  ;[].slice.call(document.querySelectorAll('pre.highlight > code[data-lang]')).forEach(function (el) { hljs.highlightBlock(el) })
+}
+</script>
+</body>
+</html>
