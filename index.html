@@ -459,8 +459,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#operaciones-cotidianas">4. Operaciones cotidianas</a>
 <ul class="sectlevel2">
 <li><a href="#creación-de-backups">4.1. Creación de backups</a></li>
-<li><a href="#restauración-de-backups">4.2. Restauración de backups</a></li>
-<li><a href="#listado-de-backups">4.3. Listado de backups</a></li>
+<li><a href="#listado-de-backups">4.2. Listado de backups</a></li>
+<li><a href="#restauración-de-backups">4.3. Restauración de backups</a></li>
 <li><a href="#listado-de-restores">4.4. Listado de restores</a></li>
 <li><a href="#listado-de-plugins">4.5. Listado de plugins</a></li>
 <li><a href="#programación-de-backups">4.6. Programación de backups</a></li>
@@ -491,7 +491,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="resumen"><a class="anchor" href="#resumen"></a>Resumen</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Velero es un servicio de copias de seguridad y recuperación de Kubernetes. Permite crear copias de seguridad de los objetos de Kubernetes y restaurarlos en caso de pérdida de datos. Velero puede ser usado para realizar copias de seguridad periódicas y guardarlas en un sistema de almacenamiento externo. En este tutorial veremos cómo configurar Velero para realizar copias de seguridad en un MiniIO, un sistema de almacenamiento de objetos compatible con Amazon S3.</p>
+<p>Velero es un servicio de copias de seguridad y recuperación de Kubernetes. Permite crear copias de seguridad de los objetos de Kubernetes y restaurarlos en caso de pérdida de datos. Velero puede ser usado para realizar copias de seguridad periódicas y guardarlas en un sistema de almacenamiento externo. Además, también se puede usar para migrar recursos entre clusters de Kubernetes. En este tutorial se usará <a href="https://min.io/">MinIO</a> (un sistema de almacenamiento de objetos compatible con Amazon S3) como sistema de almaenamiento de las copias de seguridad.</p>
 </div>
 <div class="ulist">
 <div class="title">Objetivos</div>
@@ -516,7 +516,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>Velero es un servicio de copias de seguridad y recuperación de Kubernetes. Permite crear copias de seguridad de los objetos de Kubernetes y restaurarlos en caso de pérdida de datos. Velero puede ser usado para realizar copias de seguridad de un namespace o de un cluster completo. Puede configurarse para realizar copias de seguridad periódicas y puede ser usado para migrar un cluster de Kubernetes de un proveedor a otro.</p>
 </div>
 <div class="paragraph">
-<p>Velero ofrece varios proveedores de almacenamiento para guardar las copias de seguridad, como Amazon S3, Azure Blob Storage, Google Cloud Storage, OpenStack Swift, entre otros. En este tutorial veremos cómo configurar Velero para realizar copias de seguridad en MiniIO, un sistema de almacenamiento de objetos compatible con Amazon S3.</p>
+<p>Velero ofrece varios proveedores de almacenamiento para guardar las copias de seguridad, como Amazon S3, Azure Blob Storage, Google Cloud Storage, OpenStack Swift, entre otros. En este tutorial veremos cómo configurar Velero para realizar copias de seguridad en MinIO, un sistema de almacenamiento de objetos compatible con Amazon S3.</p>
+</div>
+<div class="paragraph">
+<p>Velero también permite realizar copias de seguridad de los volúmenes de Kubernetes. Sin embargo, para ello, Velero necesita un plugin de Velero para el sistema de almacenamiento de volúmenes. En este tutorial usaremos el plugin de Velero para OpenStack Cinder, que permite a Velero interactuar con el sistema de almacenamiento de volúmenes de OpenStack. En la documentación oficial de Velero se indica <a href="https://velero.io/docs/v1.11/csi/">cómo configurar el soporte para snapshots que sigan la especificación CSI</a>.</p>
 </div>
 </div>
 </div>
@@ -746,38 +749,19 @@ create demo-backup-$(date +'%Y%m%d-%H%M') \ <b class="conum">(2)</b>
 <div class="paragraph">
 <p>Para crear un backup del cluster completo (incluyendo todos los namespaces) basta con quitar el parámetro <code>--include-namespaces</code> y el nombre del namespace.</p>
 </div>
-</div>
-<div class="sect2">
-<h3 id="restauración-de-backups"><a class="anchor" href="#restauración-de-backups"></a>4.2. Restauración de backups</h3>
 <div class="paragraph">
-<p>La restauración de un backup crea un objeto <code>Restore</code> que contiene la información de los objetos que se van a restaurar. Por tanto, la llamada al comando de restauración no consiste en restaurar la copia de seguridad, sino en crear un objeto <code>Restore</code>, que es el que contiene la información de los objetos que se van a restaurar.</p>
-</div>
-<div class="paragraph">
-<p>Para restaurar un backup, ejecutaremos el <a href="https://gist.github.com/ualmtorres/81fc2e09a7bd8e23e9241425a50969c4">comando siguiente</a>. Este comando restaura un backup en otro cluster de Kubernetes. Las credenciales de acceso al cluster de Kubernetes donde se va a realizar la recuperación del backup se indican en el archivo <code>cluster-terraform-di-dev.yaml</code>:</p>
+<p>Esta sería la salida del comando anterior:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero restore create \ <b class="conum">(1)</b>
---kubeconfig cluster-terraform-di-dev.yaml \  <b class="conum">(2)</b>
---from-backup  demo-backups-20230411144511 \ <b class="conum">(3)</b></code></pre>
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Backup request "demo-backup-20230420-2248" submitted successfully.
+
+Run `velero backup describe demo-backup-20230420-2248` or `velero backup logs demo-backup-20230420-2248` for more details.</code></pre>
 </div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Comando de Velero para crear un <em>restore</em>.</p>
-</li>
-<li>
-<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
-</li>
-<li>
-<p>Indica el nombre del backup que queremos restaurar.</p>
-</li>
-</ol>
 </div>
 </div>
 <div class="sect2">
-<h3 id="listado-de-backups"><a class="anchor" href="#listado-de-backups"></a>4.3. Listado de backups</h3>
+<h3 id="listado-de-backups"><a class="anchor" href="#listado-de-backups"></a>4.2. Listado de backups</h3>
 <div class="paragraph">
 <p>Para listar los backups, ejecutaremos el <a href="https://gist.github.com/ualmtorres/4217b59881c031545943fed41a5828dd">comando siguiente</a>:</p>
 </div>
@@ -797,16 +781,94 @@ create demo-backup-$(date +'%Y%m%d-%H%M') \ <b class="conum">(2)</b>
 </li>
 </ol>
 </div>
+<div class="paragraph">
+<p>Esta sería la salida del comando anterior:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">NAME                        STATUS      ERRORS   WARNINGS   CREATED                          EXPIRES   STORAGE LOCATION   SELECTOR
+demo-backup-20230420-2248   Completed   0        0          2023-04-20 22:48:12 +0200 CEST   29d       default            &lt;none&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="restauración-de-backups"><a class="anchor" href="#restauración-de-backups"></a>4.3. Restauración de backups</h3>
+<div class="paragraph">
+<p>La restauración de un backup crea un objeto <code>Restore</code> que contiene la información de los objetos que se van a restaurar. Por tanto, la llamada al comando de restauración no consiste en restaurar la copia de seguridad, sino en crear un objeto <code>Restore</code>, que es el que contiene la información de los objetos que se van a restaurar.</p>
+</div>
+<div class="paragraph">
+<p>Para restaurar un backup, ejecutaremos el <a href="https://gist.github.com/ualmtorres/81fc2e09a7bd8e23e9241425a50969c4">comando siguiente</a>. Este comando restaura un backup en otro cluster de Kubernetes. Las credenciales de acceso al cluster de Kubernetes donde se va a realizar la recuperación del backup se indican en el archivo <code>cluster-terraform-di-dev.yaml</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero restore create \ <b class="conum">(1)</b>
+--kubeconfig cluster-terraform-di-dev.yaml \  <b class="conum">(2)</b>
+--from-backup  demo-backup-20230420-2248 \ <b class="conum">(3)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Comando de Velero para crear un <em>restore</em>.</p>
+</li>
+<li>
+<p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
+</li>
+<li>
+<p>Indica el nombre del backup que queremos restaurar.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Esta sería la salida del comando anterior:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Restore request "demo-backup-20230420-2248-20230420-2248" submitted successfully.
+
+Run `velero restore describe demo-backup-20230420-2248-20230420-2248` or `velero restore logs demo-backup-20230420-2248-20230420-2248` for more details.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Tras esto, podemos comprobar que el namespace <code>demo</code> se ha restaurado en el otro cluster de Kubernetes.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">kubectl \
+--kubeconfig cluster-terraform-di-dev.yaml \
+-n demo \
+get all</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Esta sería la salida del comando anterior:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">NAME                              READY   STATUS    RESTARTS   AGE
+pod/tennis-api-68c9c7dddb-682cf   1/1     Running   0          8m6s
+pod/tennis-api-68c9c7dddb-p2cp8   1/1     Running   0          8m6s
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/tennis-api   2/2     2            2           8m6s
+
+NAME                                    DESIRED   CURRENT   READY   AGE
+replicaset.apps/tennis-api-68c9c7dddb   2         2         2       8m6s</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Podemos comprobar que la restaruración del backup ha sido satisfactoria, habiendo creado en este caso el namespace, el replicaset, el deployment y los pods que se encontraban en el backup.</p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="listado-de-restores"><a class="anchor" href="#listado-de-restores"></a>4.4. Listado de restores</h3>
 <div class="paragraph">
-<p>Para listar los restores, ejecutaremos el <a href="https://gist.github.com/ualmtorres/99fc886219a61f02dc9fa0b1644c6ba5">comando siguiente</a>:</p>
+<p>Para listar los restores, ejecutaremos el <a href="https://gist.github.com/ualmtorres/99fc886219a61f02dc9fa0b1644c6ba5">comando siguiente</a>. El comando se tendrá que lanzar en el cluster de Kubernetes donde se ha realizado la restauración del backup.:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero restore get \ <b class="conum">(1)</b>
---kubeconfig cluster-terraform-di.yaml <b class="conum">(2)</b></code></pre>
+--kubeconfig cluster-terraform-di-dev.yaml <b class="conum">(2)</b></code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -818,6 +880,15 @@ create demo-backup-$(date +'%Y%m%d-%H%M') \ <b class="conum">(2)</b>
 <p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
 </li>
 </ol>
+</div>
+<div class="paragraph">
+<p>Esta sería la salida del comando anterior:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">NAME                                         BACKUP                        STATUS      STARTED                          COMPLETED                        ERRORS   WARNINGS   CREATED                          SELECTOR
+demo-backup-20230420-2248-20230420230139     demo-backup-20230420-2248     Completed   2023-04-20 23:01:40 +0200 CEST   2023-04-20 23:01:43 +0200 CEST   0        1          2023-04-20 23:01:40 +0200 CEST   &lt;none&gt;</code></pre>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -871,6 +942,40 @@ create demo-backup-$(date +'%Y%m%d-%H%M') \ <b class="conum">(2)</b>
 </li>
 </ol>
 </div>
+<div class="paragraph">
+<p>Esta sería la salida del comando anterior:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Schedule "demo-backups" created successfully.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Tras unos minutos, podemos comprobar que se han creado los backups programados:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero backup get \
+--kubeconfig cluster-terraform-di.yaml</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Esta sería la salida del comando anterior:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">NAME                          STATUS      ERRORS   WARNINGS   CREATED                          EXPIRES   STORAGE LOCATION   SELECTOR
+demo-backup-20230420-2248     Completed   0        0          2023-04-20 22:48:12 +0200 CEST   29d       default            &lt;none&gt;
+demo-backups-20230420212556   Completed   0        0          2023-04-20 23:25:57 +0200 CEST   29d       default            &lt;none&gt; <b class="conum">(1)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Backup programado finalizado.</p>
+</li>
+</ol>
+</div>
 </div>
 <div class="sect2">
 <h3 id="listado-de-schedules"><a class="anchor" href="#listado-de-schedules"></a>4.7. Listado de schedules</h3>
@@ -893,6 +998,15 @@ create demo-backup-$(date +'%Y%m%d-%H%M') \ <b class="conum">(2)</b>
 </li>
 </ol>
 </div>
+<div class="paragraph">
+<p>Esta sería la salida del comando anterior:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">NAME           STATUS    CREATED                          SCHEDULE      BACKUP TTL   LAST BACKUP   SELECTOR   PAUSED
+demo-backups   Enabled   2023-04-20 23:23:26 +0200 CEST   */5 * * * *   0s           22s ago       &lt;none&gt;     false</code></pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="eliminación-de-un-schedule"><a class="anchor" href="#eliminación-de-un-schedule"></a>4.8. Eliminación de un schedule</h3>
@@ -901,7 +1015,7 @@ create demo-backup-$(date +'%Y%m%d-%H%M') \ <b class="conum">(2)</b>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero schedule delete di-backup-schedule \ <b class="conum">(1)</b>
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero schedule delete demo-backups\ <b class="conum">(1)</b>
 --kubeconfig cluster-terraform-di.yaml <b class="conum">(2)</b></code></pre>
 </div>
 </div>
@@ -915,6 +1029,15 @@ create demo-backup-$(date +'%Y%m%d-%H%M') \ <b class="conum">(2)</b>
 </li>
 </ol>
 </div>
+<div class="paragraph">
+<p>La salida del comando anterior será la siguiente:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Are you sure you want to continue (Y/N)? Y
+Schedule deleted: demo-backups</code></pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="eliminación-de-un-backup"><a class="anchor" href="#eliminación-de-un-backup"></a>4.9. Eliminación de un backup</h3>
@@ -923,7 +1046,7 @@ create demo-backup-$(date +'%Y%m%d-%H%M') \ <b class="conum">(2)</b>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero backup delete demo-backups-20230411144511 \ <b class="conum">(1)</b>
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero backup delete demo-backup-20230420-2248 \ <b class="conum">(1)</b>
 --kubeconfig cluster-terraform-di.yaml <b class="conum">(2)</b></code></pre>
 </div>
 </div>
@@ -936,6 +1059,26 @@ create demo-backup-$(date +'%Y%m%d-%H%M') \ <b class="conum">(2)</b>
 <p>Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.</p>
 </li>
 </ol>
+</div>
+<div class="paragraph">
+<p>La salida del comando anterior será la siguiente:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Are you sure you want to continue (Y/N)? Y
+Request to delete backup "demo-backup-20230420-2248" submitted successfully.
+The backup will be fully deleted after all associated data (disk snapshots, backup files, restores) are removed.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Tras unos instantes, podemos comprobar que el backup ha sido eliminado de la lista de backups de MinIO y de la lista de backups de Velero, quedando sólo en nuestro caso los backups que creó el schedule programado mientras el schedule estaba activo:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">NAME                          STATUS      ERRORS   WARNINGS   CREATED                          EXPIRES   STORAGE LOCATION   SELECTOR
+demo-backups-20230420213056   Completed   0        0          2023-04-20 23:30:57 +0200 CEST   29d       default            &lt;none&gt;
+demo-backups-20230420212556   Completed   0        0          2023-04-20 23:25:57 +0200 CEST   29d       default            &lt;none&gt;</code></pre>
+</div>
 </div>
 </div>
 </div>
@@ -989,7 +1132,43 @@ kubectl delete namespace demo \
 # Restauramos el backup en el cluster
 velero restore create \
 --kubeconfig cluster-terraform-di.yaml \
---from-backup  demo-backups-20230411144511</code></pre>
+--from-backup  demo-backups-20230420212556</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>La salida del comando anterior será la siguiente:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Restore request "demo-backups-20230420212556-20230420235238" submitted successfully.
+Run `velero restore describe demo-backups-20230420212556-20230420235238` or `velero restore logs demo-backups-20230420212556-20230420235238` for more details.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Podemos comprobar que el namespace <code>demo</code> ha sido restaurado en el cluster:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">kubectl \
+--kubeconfig cluster-terraform-di.yaml \
+-n demo \
+get all</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>La salida del comando anterior será la siguiente y nos muestra que el namespace <code>demo</code> ha sido restaurado en el cluster:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">NAME                              READY   STATUS    RESTARTS   AGE
+pod/tennis-api-68c9c7dddb-682cf   1/1     Running   0          4m38s
+pod/tennis-api-68c9c7dddb-p2cp8   1/1     Running   0          4m37s
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/tennis-api   2/2     2            2           4m37s
+
+NAME                                    DESIRED   CURRENT   READY   AGE
+replicaset.apps/tennis-api-68c9c7dddb   2         2         2       4m37s</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -1003,13 +1182,13 @@ velero restore create \
 <p>Si queremos restaurar un backup en un cluster diferente, deberemos indicar el archivo de credenciales de acceso al cluster de destino en el comando <code>velero restore create</code>.</p>
 </div>
 <div class="paragraph">
-<p>Por ejemplo, si queremos restaurar el backup <code>demo-backups-20230411144511</code> en un cluster de destino con credenciales de acceso almacenadas en <code>cluster-terraform-di-dev.yaml</code>, ejecutaríamos el siguiente comando:</p>
+<p>Por ejemplo, si queremos restaurar el backup <code>demo-backups-20230420212556</code> en un cluster de destino con credenciales de acceso almacenadas en <code>cluster-terraform-di-dev.yaml</code>, ejecutaríamos el siguiente comando:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">velero restore create \
 --kubeconfig cluster-terraform-di-dev.yaml \ <b class="conum">(1)</b>
---from-backup  demo-backups-20230411144511</code></pre>
+--from-backup  demo-backups-20230420212556</code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -1103,6 +1282,9 @@ kubectl --kubeconfig cluster-terraform-di.yaml delete crds -l component=velero</
 <li>
 <p><a href="https://hub.docker.com/r/velero/velero/tags">Versiones Docker de Velero</a></p>
 </li>
+<li>
+<p><a href="https://docs.ovh.com/gb/en/kubernetes/backing-up-cluster-with-velero/">Backing up an OVHCloud managed Kubernetes cluster using Velero</a></p>
+</li>
 </ul>
 </div>
 </div>
@@ -1110,7 +1292,7 @@ kubectl --kubeconfig cluster-terraform-di.yaml delete crds -l component=velero</
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-04-20 18:00:19 +0200
+Last updated 2023-04-20 23:59:45 +0200
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>

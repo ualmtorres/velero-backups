@@ -27,7 +27,7 @@ image::logocloudstic.png[]
 ////
 COLOCA A CONTINUACION EL RESUMEN
 ////
-Velero es un servicio de copias de seguridad y recuperación de Kubernetes. Permite crear copias de seguridad de los objetos de Kubernetes y restaurarlos en caso de pérdida de datos. Velero puede ser usado para realizar copias de seguridad periódicas y guardarlas en un sistema de almacenamiento externo. En este tutorial veremos cómo configurar Velero para realizar copias de seguridad en un MiniIO, un sistema de almacenamiento de objetos compatible con Amazon S3.
+Velero es un servicio de copias de seguridad y recuperación de Kubernetes. Permite crear copias de seguridad de los objetos de Kubernetes y restaurarlos en caso de pérdida de datos. Velero puede ser usado para realizar copias de seguridad periódicas y guardarlas en un sistema de almacenamiento externo. Además, también se puede usar para migrar recursos entre clusters de Kubernetes. En este tutorial se usará https://min.io/[MinIO] (un sistema de almacenamiento de objetos compatible con Amazon S3) como sistema de almaenamiento de las copias de seguridad.
 
 ////
 COLOCA A CONTINUACION LOS OBJETIVOS
@@ -44,7 +44,9 @@ COLOCA A CONTINUACION LOS OBJETIVOS
 
 Velero es un servicio de copias de seguridad y recuperación de Kubernetes. Permite crear copias de seguridad de los objetos de Kubernetes y restaurarlos en caso de pérdida de datos. Velero puede ser usado para realizar copias de seguridad de un namespace o de un cluster completo. Puede configurarse para realizar copias de seguridad periódicas y puede ser usado para migrar un cluster de Kubernetes de un proveedor a otro. 
 
-Velero ofrece varios proveedores de almacenamiento para guardar las copias de seguridad, como Amazon S3, Azure Blob Storage, Google Cloud Storage, OpenStack Swift, entre otros. En este tutorial veremos cómo configurar Velero para realizar copias de seguridad en MiniIO, un sistema de almacenamiento de objetos compatible con Amazon S3.
+Velero ofrece varios proveedores de almacenamiento para guardar las copias de seguridad, como Amazon S3, Azure Blob Storage, Google Cloud Storage, OpenStack Swift, entre otros. En este tutorial veremos cómo configurar Velero para realizar copias de seguridad en MinIO, un sistema de almacenamiento de objetos compatible con Amazon S3.
+
+Velero también permite realizar copias de seguridad de los volúmenes de Kubernetes. Sin embargo, para ello, Velero necesita un plugin de Velero para el sistema de almacenamiento de volúmenes. En este tutorial usaremos el plugin de Velero para OpenStack Cinder, que permite a Velero interactuar con el sistema de almacenamiento de volúmenes de OpenStack. En la documentación oficial de Velero se indica https://velero.io/docs/v1.11/csi/[cómo configurar el soporte para snapshots que sigan la especificación CSI].
 
 ## Componentes de Velero
 
@@ -200,22 +202,14 @@ create demo-backup-$(date +'%Y%m%d-%H%M') \ <2>
 
 Para crear un backup del cluster completo (incluyendo todos los namespaces) basta con quitar el parámetro `--include-namespaces` y el nombre del namespace.
 
-### Restauración de backups
-
-La restauración de un backup crea un objeto `Restore` que contiene la información de los objetos que se van a restaurar. Por tanto, la llamada al comando de restauración no consiste en restaurar la copia de seguridad, sino en crear un objeto `Restore`, que es el que contiene la información de los objetos que se van a restaurar.
-
-Para restaurar un backup, ejecutaremos el https://gist.github.com/ualmtorres/81fc2e09a7bd8e23e9241425a50969c4[comando siguiente]. Este comando restaura un backup en otro cluster de Kubernetes. Las credenciales de acceso al cluster de Kubernetes donde se va a realizar la recuperación del backup se indican en el archivo `cluster-terraform-di-dev.yaml`:
+Esta sería la salida del comando anterior:
 
 [source, bash]
 ----
-velero restore create \ <1>
---kubeconfig cluster-terraform-di-dev.yaml \  <2>
---from-backup  demo-backups-20230411144511 \ <3>
-----
+Backup request "demo-backup-20230420-2248" submitted successfully.
 
-<1> Comando de Velero para crear un _restore_.
-<2> Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.
-<3> Indica el nombre del backup que queremos restaurar.
+Run `velero backup describe demo-backup-20230420-2248` or `velero backup logs demo-backup-20230420-2248` for more details.
+----
 
 ### Listado de backups
 
@@ -230,18 +224,87 @@ velero backup get \ <1>
 <1> Comando de Velero para listar los backups.
 <2> Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.
 
+Esta sería la salida del comando anterior:
+
+[source, bash]
+----
+NAME                        STATUS      ERRORS   WARNINGS   CREATED                          EXPIRES   STORAGE LOCATION   SELECTOR
+demo-backup-20230420-2248   Completed   0        0          2023-04-20 22:48:12 +0200 CEST   29d       default            <none>
+----
+
+### Restauración de backups
+
+La restauración de un backup crea un objeto `Restore` que contiene la información de los objetos que se van a restaurar. Por tanto, la llamada al comando de restauración no consiste en restaurar la copia de seguridad, sino en crear un objeto `Restore`, que es el que contiene la información de los objetos que se van a restaurar.
+
+Para restaurar un backup, ejecutaremos el https://gist.github.com/ualmtorres/81fc2e09a7bd8e23e9241425a50969c4[comando siguiente]. Este comando restaura un backup en otro cluster de Kubernetes. Las credenciales de acceso al cluster de Kubernetes donde se va a realizar la recuperación del backup se indican en el archivo `cluster-terraform-di-dev.yaml`:
+
+[source, bash]
+----
+velero restore create \ <1>
+--kubeconfig cluster-terraform-di-dev.yaml \  <2>
+--from-backup  demo-backup-20230420-2248 \ <3>
+----
+
+<1> Comando de Velero para crear un _restore_.
+<2> Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.
+<3> Indica el nombre del backup que queremos restaurar.
+
+Esta sería la salida del comando anterior:
+
+[source, bash]
+----
+Restore request "demo-backup-20230420-2248-20230420-2248" submitted successfully.
+
+Run `velero restore describe demo-backup-20230420-2248-20230420-2248` or `velero restore logs demo-backup-20230420-2248-20230420-2248` for more details.
+----
+
+Tras esto, podemos comprobar que el namespace `demo` se ha restaurado en el otro cluster de Kubernetes.
+
+[source, bash]
+----
+kubectl \
+--kubeconfig cluster-terraform-di-dev.yaml \
+-n demo \
+get all
+----
+
+Esta sería la salida del comando anterior:
+
+[source, bash]
+----
+NAME                              READY   STATUS    RESTARTS   AGE
+pod/tennis-api-68c9c7dddb-682cf   1/1     Running   0          8m6s
+pod/tennis-api-68c9c7dddb-p2cp8   1/1     Running   0          8m6s
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/tennis-api   2/2     2            2           8m6s
+
+NAME                                    DESIRED   CURRENT   READY   AGE
+replicaset.apps/tennis-api-68c9c7dddb   2         2         2       8m6s
+----
+
+Podemos comprobar que la restaruración del backup ha sido satisfactoria, habiendo creado en este caso el namespace, el replicaset, el deployment y los pods que se encontraban en el backup.
+
 ### Listado de restores
 
-Para listar los restores, ejecutaremos el https://gist.github.com/ualmtorres/99fc886219a61f02dc9fa0b1644c6ba5[comando siguiente]:
+Para listar los restores, ejecutaremos el https://gist.github.com/ualmtorres/99fc886219a61f02dc9fa0b1644c6ba5[comando siguiente]. El comando se tendrá que lanzar en el cluster de Kubernetes donde se ha realizado la restauración del backup.:
 
 [source, bash]
 ----
 velero restore get \ <1>
---kubeconfig cluster-terraform-di.yaml <2>
+--kubeconfig cluster-terraform-di-dev.yaml <2>
 ----
 
 <1> Comando de Velero para listar los restores.
 <2> Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.
+
+Esta sería la salida del comando anterior:
+
+[source, bash]
+----
+NAME                                         BACKUP                        STATUS      STARTED                          COMPLETED                        ERRORS   WARNINGS   CREATED                          SELECTOR
+demo-backup-20230420-2248-20230420230139     demo-backup-20230420-2248     Completed   2023-04-20 23:01:40 +0200 CEST   2023-04-20 23:01:43 +0200 CEST   0        1          2023-04-20 23:01:40 +0200 CEST   <none>
+----
 
 ### Listado de plugins
 
@@ -273,6 +336,33 @@ velero schedule create demo-backups \ <1>
 <3> Indica la frecuencia de ejecución del schedule. En este caso, cada 5 minutos.
 <4> Indica el namespace que queremos incluir en el backup (p.e. `demo`).
 
+Esta sería la salida del comando anterior:
+
+[source, bash]
+----
+Schedule "demo-backups" created successfully.
+----
+
+Tras unos minutos, podemos comprobar que se han creado los backups programados:
+
+[source, bash]
+----
+velero backup get \
+--kubeconfig cluster-terraform-di.yaml
+----
+
+Esta sería la salida del comando anterior:
+
+[source, bash]
+----
+NAME                          STATUS      ERRORS   WARNINGS   CREATED                          EXPIRES   STORAGE LOCATION   SELECTOR
+demo-backup-20230420-2248     Completed   0        0          2023-04-20 22:48:12 +0200 CEST   29d       default            <none>
+demo-backups-20230420212556   Completed   0        0          2023-04-20 23:25:57 +0200 CEST   29d       default            <none> <1>
+----
+
+<1> Backup programado finalizado.
+
+
 ### Listado de schedules
 
 Para listar los schedules, ejecutaremos el https://gist.github.com/ualmtorres/761195744464c5287719a51dd8bedc60[comando siguiente]:
@@ -286,18 +376,34 @@ velero schedule get \ <1>
 <1> Comando de Velero para listar los schedules.
 <2> Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.
 
+Esta sería la salida del comando anterior:
+
+[source, bash]
+----
+NAME           STATUS    CREATED                          SCHEDULE      BACKUP TTL   LAST BACKUP   SELECTOR   PAUSED
+demo-backups   Enabled   2023-04-20 23:23:26 +0200 CEST   */5 * * * *   0s           22s ago       <none>     false
+----
+
 ### Eliminación de un schedule
 
 Para eliminar un schedule y que dejen de hacerse backups programados, ejecutaremos el https://gist.github.com/ualmtorres/014d32e96adc3337e9ac8436592a4be8[comando siguiente]:
 
 [source, bash]
 ----
-velero schedule delete di-backup-schedule \ <1>
+velero schedule delete demo-backups\ <1>
 --kubeconfig cluster-terraform-di.yaml <2>
 ----
 
 <1> Comando de Velero para eliminar un schedule. Se indica el nombre del schedule.
 <2> Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.
+
+La salida del comando anterior será la siguiente:
+
+[source, bash]
+----
+Are you sure you want to continue (Y/N)? Y
+Schedule deleted: demo-backups
+----
 
 ### Eliminación de un backup
 
@@ -305,12 +411,31 @@ Para eliminar un backup, ejecutaremos el https://gist.github.com/ualmtorres/6545
 
 [source, bash]
 ----
-velero backup delete demo-backups-20230411144511 \ <1>
+velero backup delete demo-backup-20230420-2248 \ <1>
 --kubeconfig cluster-terraform-di.yaml <2>
 ----
 
 <1> Comando de Velero para eliminar un backup. Se indica el nombre del backup.
 <2> Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes.
+
+La salida del comando anterior será la siguiente:
+
+[source, bash]
+----
+Are you sure you want to continue (Y/N)? Y
+Request to delete backup "demo-backup-20230420-2248" submitted successfully.
+The backup will be fully deleted after all associated data (disk snapshots, backup files, restores) are removed.
+----
+
+Tras unos instantes, podemos comprobar que el backup ha sido eliminado de la lista de backups de MinIO y de la lista de backups de Velero, quedando sólo en nuestro caso los backups que creó el schedule programado mientras el schedule estaba activo:
+
+[source, bash]
+----
+NAME                          STATUS      ERRORS   WARNINGS   CREATED                          EXPIRES   STORAGE LOCATION   SELECTOR
+demo-backups-20230420213056   Completed   0        0          2023-04-20 23:30:57 +0200 CEST   29d       default            <none>
+demo-backups-20230420212556   Completed   0        0          2023-04-20 23:25:57 +0200 CEST   29d       default            <none>
+----
+
 
 ## Simulación de pérdida de un namespace
 
@@ -341,20 +466,53 @@ kubectl delete namespace demo \
 # Restauramos el backup en el cluster
 velero restore create \
 --kubeconfig cluster-terraform-di.yaml \
---from-backup  demo-backups-20230411144511
+--from-backup  demo-backups-20230420212556
+----
+
+La salida del comando anterior será la siguiente:
+
+[source, bash]
+----
+Restore request "demo-backups-20230420212556-20230420235238" submitted successfully.
+Run `velero restore describe demo-backups-20230420212556-20230420235238` or `velero restore logs demo-backups-20230420212556-20230420235238` for more details.
+----
+
+Podemos comprobar que el namespace `demo` ha sido restaurado en el cluster:
+
+[source, bash]
+----
+kubectl \
+--kubeconfig cluster-terraform-di.yaml \
+-n demo \
+get all
+----
+
+La salida del comando anterior será la siguiente y nos muestra que el namespace `demo` ha sido restaurado en el cluster:
+
+[source, bash]
+----
+NAME                              READY   STATUS    RESTARTS   AGE
+pod/tennis-api-68c9c7dddb-682cf   1/1     Running   0          4m38s
+pod/tennis-api-68c9c7dddb-p2cp8   1/1     Running   0          4m37s
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/tennis-api   2/2     2            2           4m37s
+
+NAME                                    DESIRED   CURRENT   READY   AGE
+replicaset.apps/tennis-api-68c9c7dddb   2         2         2       4m37s
 ----
 
 [NOTE]
 ====
 Si queremos restaurar un backup en un cluster diferente, deberemos indicar el archivo de credenciales de acceso al cluster de destino en el comando `velero restore create`.
 
-Por ejemplo, si queremos restaurar el backup `demo-backups-20230411144511` en un cluster de destino con credenciales de acceso almacenadas en `cluster-terraform-di-dev.yaml`, ejecutaríamos el siguiente comando:
+Por ejemplo, si queremos restaurar el backup `demo-backups-20230420212556` en un cluster de destino con credenciales de acceso almacenadas en `cluster-terraform-di-dev.yaml`, ejecutaríamos el siguiente comando:
 
 [source, bash]
 ----
 velero restore create \
 --kubeconfig cluster-terraform-di-dev.yaml \ <1>
---from-backup  demo-backups-20230411144511
+--from-backup  demo-backups-20230420212556
 ----
 
 <1> Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de destino.
@@ -409,3 +567,4 @@ Velero es una herramienta muy útil para realizar backups de namespaces y para m
 * https://velero.io/[Página oficial de Velero]
 * https://velero.io/docs/v1.10[Documentación oficial de Velero (versión 1.10)]
 * https://hub.docker.com/r/velero/velero/tags[Versiones Docker de Velero]
+* https://docs.ovh.com/gb/en/kubernetes/backing-up-cluster-with-velero/[Backing up an OVHCloud managed Kubernetes cluster using Velero]
