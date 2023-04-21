@@ -44,9 +44,9 @@ COLOCA A CONTINUACION LOS OBJETIVOS
 
 Velero es un servicio de copias de seguridad y recuperación de Kubernetes. Permite crear copias de seguridad de los objetos de Kubernetes y restaurarlos en caso de pérdida de datos. Velero puede ser usado para realizar copias de seguridad de un namespace o de un cluster completo. Puede configurarse para realizar copias de seguridad periódicas y puede ser usado para migrar un cluster de Kubernetes de un proveedor a otro. 
 
-Velero ofrece varios proveedores de almacenamiento para guardar las copias de seguridad, como Amazon S3, Azure Blob Storage, Google Cloud Storage, OpenStack Swift, entre otros. En este tutorial veremos cómo configurar Velero para realizar copias de seguridad en MinIO, un sistema de almacenamiento de objetos compatible con Amazon S3.
+Velero ofrece varios proveedores de almacenamiento para guardar las copias de seguridad, como Amazon S3, Azure Blob Storage, Google Cloud Storage, OpenStack Swift, entre otros. En este tutorial veremos cómo configurar Velero para realizar copias de seguridad en https://min.io/[MinIO], un sistema de almacenamiento de objetos compatible con Amazon S3.
 
-Velero también permite realizar copias de seguridad de los volúmenes de Kubernetes. Sin embargo, para ello, Velero necesita un plugin de Velero para el sistema de almacenamiento de volúmenes. En este tutorial usaremos el plugin de Velero para OpenStack Cinder, que permite a Velero interactuar con el sistema de almacenamiento de volúmenes de OpenStack. En la documentación oficial de Velero se indica https://velero.io/docs/v1.11/csi/[cómo configurar el soporte para snapshots que sigan la especificación CSI].
+Velero también permite realizar copias de seguridad de los volúmenes de Kubernetes. Sin embargo, para ello, Velero necesita un plugin de Velero para el sistema de almacenamiento de volúmenes. En nuestro caso usaríamos el plugin de Velero para OpenStack Cinder, que permite a Velero interactuar con el sistema de almacenamiento de volúmenes de OpenStack. En la documentación oficial de Velero se indica https://velero.io/docs/v1.11/csi/[cómo configurar el soporte para snapshots que sigan la especificación CSI]. Sin embargo, aún no trataremos este tema en este tutorial.
 
 ## Componentes de Velero
 
@@ -80,7 +80,7 @@ El CLI lo descargamos en nuestro equipo local de acuerdo con la https://velero.i
 
 ### Preparación del cluster de Kubernetes
 
-La instalación de Velero en Kubernetes crea varios objetos de Kubernetes en el namespace `velero`, como `CustomResourceDefinition` para extender la API de Kubernetes creando una serie de objetos nuevos relacionados con las copias de seguridad de Velero, como son los de copias de seguridad, copias de seguridad programadas, restores y localizaciones de backups. Además crea los objetos `ClusterRole`, `ServiceAccount`, `ClusterRoleBinding`, `Deployment`, `BackupStorageLocation`, `VolumeSnapshotLocation` necesarios.
+La instalación de Velero en Kubernetes crea varios objetos de Kubernetes en el namespace `velero`, como `CustomResourceDefinition` para extender la API de Kubernetes. Esto crean una serie de objetos nuevos relacionados con las copias de seguridad de Velero, como son los de copias de seguridad, copias de seguridad programadas, restores y localizaciones de backups. Además crea los objetos `ClusterRole`, `ServiceAccount`, `ClusterRoleBinding`, `Deployment`, `BackupStorageLocation`, `VolumeSnapshotLocation` necesarios.
 
 Para poder instalar Velero 1.10 en un cluster de Kubernetes y poder hacer los backups en MinIO, el cluster de Kubernetes debe cumplir los siguientes requisitos:
 
@@ -127,7 +127,7 @@ velero install \
 
 [NOTE]
 ====
-Los valores de versión de instalación de Velero se pueden obtener de https://hub.docker.com/r/velero/velero/tags[Docker Hub] 
+Los valores de la versión de instalación de Velero se pueden obtener de https://hub.docker.com/r/velero/velero/tags[Docker Hub] 
 ====
 
 Tras esto, se instalarán en el cluster de Kubernetes los objetos siguientes:
@@ -155,6 +155,28 @@ deployment.apps/velero   1/1     1            1           2m
 NAME                                DESIRED   CURRENT   READY   AGE
 replicaset.apps/velero-6d8f45bfbc   1         1         1       2m
 ----
+
+[IMPORTANT]
+====
+Para poder realizar procesos de migración o restauración de backups en otros clusters de Kubernetes, también necesitaremos instalar Velero en el cluster de Kubernetes de destino. La instalación se realizará con los mismos parámetros que en el cluster de origen, indicando también el `secret-file` con las credenciales de acceso al sistema de almacenamiento de objetos del cluster de origen y las credenciales de acceso al cluster Kubernetes de destino.
+
+El comando de instalación sería el siguiente:
+
+[source, bash]
+----
+velero install \
+--kubeconfig cluster-terraform-di-dev.yaml \ <1>
+--provider aws \
+--plugins velero/velero-plugin-for-aws:v1.6.0 \
+--bucket velero-di \
+--secret-file ./di-minio.credentials \
+--use-volume-snapshots=false \
+--backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://<minio-dns-or-ip>
+----
+
+<1> Indica el archivo de configuración de Kubernetes que contiene las credenciales de acceso al cluster de Kubernetes de destino.
+
+====
 
 ////
 ### Instalación de plugins de Velero
@@ -202,7 +224,10 @@ create demo-backup-$(date +'%Y%m%d-%H%M') \ <2>
 <2> Indica el nombre del backup. En este caso, usaremos la fecha y hora actual.
 <3> Indica el namespace que queremos incluir en el backup (p.e. `demo`).
 
+[NOTE]
+====
 Para crear un backup del cluster completo (incluyendo todos los namespaces) basta con quitar el parámetro `--include-namespaces` y el nombre del namespace.
+====
 
 Esta sería la salida del comando anterior:
 
@@ -255,7 +280,7 @@ demo-backup-20230420-2248   Completed   0        0          2023-04-20 22:48:12 
 
 ### Restauración de backups
 
-La restauración de un backup crea un objeto `Restore` que contiene la información de los objetos que se van a restaurar. Por tanto, la llamada al comando de restauración no consiste en restaurar la copia de seguridad, sino en crear un objeto `Restore`, que es el que contiene la información de los objetos que se van a restaurar.
+La restauración de un backup crea un objeto `Restore` que contiene la información de los objetos que se van a restaurar. Por tanto, la llamada al comando de restauración no consiste en restaurar la copia de seguridad, sino en crear un objeto `Restore`, que es el que se encarga de restaurar la copia de seguridad y contiene la información de los objetos que se van a restaurar.
 
 Para restaurar un backup, ejecutaremos el https://gist.github.com/ualmtorres/81fc2e09a7bd8e23e9241425a50969c4[comando siguiente]. Este comando restaura un backup en otro cluster de Kubernetes. Las credenciales de acceso al cluster de Kubernetes donde se va a realizar la recuperación del backup se indican en el archivo `cluster-terraform-di-dev.yaml`:
 
