@@ -80,6 +80,8 @@ El CLI lo descargamos en nuestro equipo local de acuerdo con la https://velero.i
 
 ### Preparación del cluster de Kubernetes
 
+La instalación de Velero en Kubernetes crea varios objetos de Kubernetes en el namespace `velero`, como `CustomResourceDefinition` para extender la API de Kubernetes creando una serie de objetos nuevos relacionados con las copias de seguridad de Velero, como son los de copias de seguridad, copias de seguridad programadas, restores y localizaciones de backups. Además crea los objetos `ClusterRole`, `ServiceAccount`, `ClusterRoleBinding`, `Deployment`, `BackupStorageLocation`, `VolumeSnapshotLocation` necesarios.
+
 Para poder instalar Velero 1.10 en un cluster de Kubernetes y poder hacer los backups en MinIO, el cluster de Kubernetes debe cumplir los siguientes requisitos:
 
 * Kubernetes 1.16 o superior.
@@ -210,6 +212,25 @@ Backup request "demo-backup-20230420-2248" submitted successfully.
 
 Run `velero backup describe demo-backup-20230420-2248` or `velero backup logs demo-backup-20230420-2248` for more details.
 ----
+
+[IMPORTANT]
+====
+Los nombres de los backups deben ser únicos. Si se intenta crear un backup con un nombre que ya existe, Velero devolverá un error.
+====
+
+.Duración de los backups
+****
+De forma predeterminada, los backups caducan a los 30 días y se eliminan automáticamente. Para evitar este comportamiento, se puede usar el parámetro `--ttl` del comando `velero backup create`. En el valor de este parámetro se puede indicar el número de días que queremos que dure el backup. Por ejemplo, para que el backup dure 365 días, ejecutaríamos el comando siguiente:
+
+[source, bash]
+----
+velero backup create demo-backup-$(date +'%Y%m%d-%H%M') \
+--include-namespaces demo \
+--ttl 365d <1>
+----
+
+<1> Indica que el backup caducará a los 365 días.
+****
 
 ### Listado de backups
 
@@ -343,6 +364,8 @@ Esta sería la salida del comando anterior:
 Schedule "demo-backups" created successfully.
 ----
 
+A partir de este momento, Velero se encargará de crear backups cada 5 minutos. Los nombres de los backups se generarán de forma automática, añadiendo un sufijo con la fecha y hora de creación del backup (p.e. `demo-backups-20230420212556`).
+
 Tras unos minutos, podemos comprobar que se han creado los backups programados:
 
 [source, bash]
@@ -362,6 +385,26 @@ demo-backups-20230420212556   Completed   0        0          2023-04-20 23:25:5
 
 <1> Backup programado finalizado.
 
+[TIP]
+====
+También se puede usar la sintaxis más legible del parámetro `--schedule`. Por ejemplo, para indicar que el schedule se ejecute cada 5 minutos, se puede usar la sintaxis `--schedule='@every 5m'`.
+====
+
+.Duración de los backups
+****
+Tal y como se indicón en la sección de Creación de backups, de forma predeterminada los backups caducan a los 30 días y se eliminan automáticamente. Para evitar este comportamiento, se puede usar el parámetro `--ttl` del comando `velero backup schedule create`. En el valor de este parámetro se puede indicar el número de días que queremos que dure el backup. Por ejemplo, para que el backup dure 365 días, ejecutaríamos el comando siguiente:
+
+[source, bash]
+----
+velero schedule create demo-backups \
+--kubeconfig cluster-terraform-di.yaml \
+--schedule='*/5 * * * *' \
+--include-namespaces demo \
+--ttl 365d <1>
+----
+
+<1> Indica que el backup caducará a los 365 días.
+****
 
 ### Listado de schedules
 
@@ -568,3 +611,4 @@ Velero es una herramienta muy útil para realizar backups de namespaces y para m
 * https://velero.io/docs/v1.10[Documentación oficial de Velero (versión 1.10)]
 * https://hub.docker.com/r/velero/velero/tags[Versiones Docker de Velero]
 * https://docs.ovh.com/gb/en/kubernetes/backing-up-cluster-with-velero/[Backing up an OVHCloud managed Kubernetes cluster using Velero]
+* https://onthedock.github.io/tags/velero/[Velero - Backup Y Disaster Recovery Para Kubernetes]
